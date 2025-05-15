@@ -25,10 +25,10 @@ def generate_star_question(skill_row):
     skill = skill_row['Skill']
     description = skill_row.get('Description', '')
     prompt = (
-        f"Згенеруй ситуаційне інтервʼю у форматі STAR для Project Manager у Software/IT.\n"
-        f"Використай навичку: {skill}.\n"
-        f"Опиши лише Situation і Task. Заверши фразою: 'Що ви зробите?'\n"
-        f"Опис навички: {description}"
+        f"Generate a situational interview question using the STAR format for a Project Manager in Software/IT.\n"
+        f"Focus on the skill: {skill}.\n"
+        f"Only describe the Situation and Task. End with: 'What would you do?'\n"
+        f"Skill description: {description}"
     )
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -43,13 +43,13 @@ def evaluate_answer(skill_row, user_answer):
     strong = skill_row.get('Level Strong', '')
     advanced = skill_row.get('Level Advanced', '')
     prompt = (
-        f"Оцініть відповідь кандидата на питання за навичкою: {skill}.\n"
-        f"Відповідь: {user_answer}\n"
-        f"Критерії оцінки:\n"
-        f"- Базовий рівень: {basic}\n"
-        f"- Сильний рівень: {strong}\n"
-        f"- Просунутий рівень: {advanced}\n"
-        f"Зроби прогнозований результат (Result), оцінку рівня (Basic/Strong/Advanced) та короткий фідбек."
+        f"Evaluate this answer based on the STAR format for the skill: {skill}.\n"
+        f"Candidate's answer: {user_answer}\n"
+        f"Evaluation criteria:\n"
+        f"- Basic level: {basic}\n"
+        f"- Strong level: {strong}\n"
+        f"- Advanced level: {advanced}\n"
+        f"Provide the predicted result (R), the estimated level (Basic/Strong/Advanced), and a short feedback."
     )
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -62,7 +62,7 @@ def generate_sample_answer(skill_row):
     skill = skill_row['Skill']
     description = skill_row.get('Description', '')
     prompt = (
-        f"Згенеруй приклад відповіді кандидата на питання за навичкою {skill} у форматі STAR, з акцентом на дії (Action). Опис навички: {description}"
+        f"Generate a sample STAR-format answer for the skill {skill}, focusing on the Action part. Skill description: {description}"
     )
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -74,7 +74,7 @@ def generate_sample_answer(skill_row):
 def generate_resources(skill_row):
     skill = skill_row['Skill']
     prompt = (
-        f"Дай список рекомендованої літератури, онлайн-курсів і відеолекцій для покращення навички: {skill} (Project Management у сфері IT/Software)."
+        f"Provide a list of recommended books, courses, and videos to improve the skill: {skill} (for Project Managers in IT/Software)."
     )
     response = client.chat.completions.create(
         model="gpt-4o",
@@ -95,13 +95,13 @@ async def start(ctx):
         'current': 0,
         'results': []
     }
-    await ctx.send("🚀 Сесію ініціалізовано! Готові до практики інтерв'ю. Натисніть /next щоб отримати перше питання.")
+    await ctx.send("🚀 Session initialized! Ready to practice your interview skills. Type /next to get your first question.")
 
 @bot.command()
 async def next(ctx):
     user_id = ctx.author.id
     if user_id not in user_sessions:
-        await ctx.send("❗ Спочатку введіть /start")
+        await ctx.send("❗ Please start a session using /start")
         return
 
     session = user_sessions[user_id]
@@ -111,7 +111,7 @@ async def next(ctx):
     session['current_question'] = question
     session['current_skill'] = skill_row
 
-    await ctx.send(f"**Питання:**\n{question}")
+    await ctx.send(f"**Question:**\n{question}")
 
 @bot.command()
 async def hint(ctx):
@@ -119,11 +119,11 @@ async def hint(ctx):
     session = user_sessions.get(user_id)
     if session and 'current_skill' in session:
         if session.get('hint_used'):
-            await ctx.send("ℹ️ Підказка на це питання вже була показана. Використай /next для нового питання.")
+            await ctx.send("ℹ️ Hint already shown for this question. Use /next to get a new one.")
             return
 
         skill_row = session['current_skill']
-        prompt = f"Дай коротку підказку або натяк, як відповісти на питання, пов'язане з навичкою: {skill_row['Skill']}\nОпис навички: {skill_row['Description']}"
+        prompt = f"Give a short tip or clue on how to answer a question related to the skill: {skill_row['Skill']}\nSkill description: {skill_row['Description']}"
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}],
@@ -131,9 +131,9 @@ async def hint(ctx):
         )
         hint_text = response.choices[0].message.content
         session['hint_used'] = True
-        await ctx.send(f"💡 **Підказка:**\n{hint_text}")
+        await ctx.send(f"💡 **Hint:**\n{hint_text}")
     else:
-        await ctx.send("❗ Спочатку введіть /next для отримання питання")
+        await ctx.send("❗ Use /next to get a question first")
 
 @bot.command()
 async def skip(ctx):
@@ -142,7 +142,7 @@ async def skip(ctx):
         user_sessions[user_id]['current'] += 1
         await next(ctx)
     else:
-        await ctx.send("❗ Спочатку введіть /start")
+        await ctx.send("❗ Please start a session using /start")
 
 @bot.command()
 async def answer(ctx):
@@ -154,9 +154,9 @@ async def answer(ctx):
             for i in range(0, len(sample), 2000):
                 await ctx.send(sample[i:i+2000])
         else:
-            await ctx.send(f"📘 **Приклад відповіді:**\n{sample}")
+            await ctx.send(f"📘 **Sample Answer:**\n{sample}")
     else:
-        await ctx.send("❗ Спочатку введіть /next")
+        await ctx.send("❗ Use /next to get a question first")
 
 @bot.command()
 async def info(ctx):
@@ -168,9 +168,9 @@ async def info(ctx):
             for i in range(0, len(resources), 2000):
                 await ctx.send(resources[i:i+2000])
         else:
-            await ctx.send(f"📚 **Рекомендовані ресурси:**\n{resources}")
+            await ctx.send(f"📚 **Recommended Resources:**\n{resources}")
     else:
-        await ctx.send("❗ Спочатку введіть /next")
+        await ctx.send("❗ Use /next to get a question first")
 
 @bot.event
 async def on_message(message):
@@ -182,7 +182,7 @@ async def on_message(message):
             skill_row = session['current_skill']
             user_answer = message.content
             eval_response = evaluate_answer(skill_row, user_answer)
-            await message.channel.send(f"📊 **Оцінка відповіді:**\n{eval_response}")
+            await message.channel.send(f"📊 **Feedback:**\n{eval_response}")
             session['results'].append(eval_response)
             session['current'] += 1
 
